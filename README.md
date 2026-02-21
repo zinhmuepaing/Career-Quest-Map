@@ -1,180 +1,175 @@
 # Career Quest Map
 
-An AI-guided pathway discovery game for Singapore youth. Career Quest Map turns career exploration into a short, story-driven game. Instead of dumping course lists on you, it starts with self-discovery, narrows down your interests, and then gives realistic next steps you can actually do.
+An AI-guided pathway discovery game for Singapore youth. Career Quest Map turns career exploration into a short, story-driven game that helps users discover strengths, narrow interests, and leave with practical next steps.
+
+---
 
 ## Demo Preview
 
-- Part 1 in the House: quick self-discovery questions
-- Part 2 with the Wise Man: deeper narrowing questions
-- Analysis: strengths, work style, feedback
-- Gates: ranked pathways you can explore
-- Dragon quests: actionable 1-week and 1-month tasks
-- Quest booth: review your analysis and quests
+- **Part 1 — The House:** quick self-discovery (5 questions)
+- **Part 2 — The Wise Man:** deeper narrowing (12 questions; Poly has an extra question)
+- **Analysis:** strengths, work-style tags, short feedback, 3 ranked options
+- **Gates:** 3 ranked gates (1/2/3) with explanation and Yes/No decision
+- **Dragon quests:** actionable 1-week micro quest and 1-month mini project
+- **Quest Booth:** review analysis and quests
 
-## Why We Built This
+---
 
-Many students are pushed to choose early. Grades tell performance. They do not tell fit. This project is designed to help users:
+## Why This Project
+
+Many students must decide early with limited context. Grades show performance, not fit. This project helps users:
 
 - Understand strengths and work style
-- Explore options based on fit and growth
-- Leave with an action plan, not just a recommendation
+- Explore realistic pathways matched to fit and growth
+- Leave with concrete, low-cost actions (micro-quests and mini projects)
 
-## Key Features
+---
 
-### 1) Adaptive Question Flow (LLM-powered)
+## Key Features (Aligned to Code)
 
-Profile step collects:
+### Adaptive Question Flow
 
-- Name
-- Education status (Secondary School, JC, Poly)
-- Poly course of study (only if Poly)
+Powered by a content engine and optional Azure OpenAI LLM:
 
-The LLM generates questions based on the user context. Outputs are constrained using strict JSON schemas and validation.
+- LLM wrapper: `llm_client.py` returns parsed JSON only.
+- If no LLM is configured, deterministic fallback content is used (`fallback_content.py`).
+- Strict schema validation for all LLM outputs: validators in `validation.py` enforce counts and types.
+- Content engine (`content_engine.py`) builds prompts with hard rules and schema hints.
 
-### 2) Part 1: House Questions (5 questions)
+### Part 1 — House (exactly 5 questions)
 
-Goal: broad self-discovery, then tighten slightly.
+- Distribution enforced: 2 MCQ, 1 slider (0–10), 1 rating (1–5), 1 text.
+- Topics adapt to education status: Secondary/JC vs Poly.
 
-Question types are enforced:
+### Part 2 — Wise Man (exactly 12 questions + Poly extra)
 
-- 2 MCQ
-- 1 slider (0 to 10 with labels)
-- 1 rating (1 to 5)
-- 1 text
+- Engine infers exactly 3 fields and generates 12 narrowing questions.
+- Distribution enforced: 4 MCQ, 3 slider, 3 rating, 2 text.
+- Poly-only MCQ: choice between Work and Go to uni.
 
-Topic focus:
+### Analysis (Schema C)
 
-- Secondary School / JC: interests, personality, curiosity, preferred activities
-- Poly: course challenges, frustrations, motivation, preferred learning style, other interests
-
-### 3) Part 2: Wise Man Questions (12 questions + Poly extra)
-
-Goal: narrow across 3 inferred fields.
-
-The LLM:
-
-- Infers exactly 3 fields from Part 1 answers
-- Generates 12 sequential narrowing questions
-
-Question types are enforced:
-
-- 4 MCQ
-- 3 slider
-- 3 rating
-- 2 text
-
-Poly-only extra question:
-
-- Work
-- Go to uni
-
-### 4) Analysis (Schema C)
-
-After Part 2, the system generates:
+Outputs:
 
 - 3 strength tags
-- 2 to 4 work style tags
-- 2 to 5 feedback lines (fantasy-lite, short)
+- 2–4 work-style tags
+- 2–5 feedback lines
 - Exactly 3 ranked suggested options
-  - Poly Work: careers/roles
-  - Else: courses
+  - For Poly who choose Work: suggested options are careers
+  - Otherwise: courses
 
-### 5) Gates and Gate Scenes (Schema D)
+### Gates (Schema D)
 
-The user enters a gate scene with 3 gates, ranked 1, 2, 3 based on Part 2 answers.
+- Player enters a gate scene with 3 ranked options (from analysis).
+- Each gate includes: what to study, employment outlook (safe language), impact on people.
+- If a gate is a work-path, also includes work-style line and salary outlook (safe ranges).
+- **Yes** unlocks Dragon quests; **No** returns to the gates list.
 
-Inside each gate, the Wise Man explains:
+### Dragon Quests & Resources
 
-- What to study or skills to build
-- Employment outlook (safe wording)
-- Impact on people
-- If work-path: also salary outlook and work style (safe wording)
+- **Micro quest:** 1-week, short sessions, tangible deliverable.
+- **Mini project:** 1-month, Plan/Build/Review phases, shareable output.
+- **Resources:** free and accessible (docs, tutorial, example project, community).
 
-Then user chooses:
+### Quest Log & Orientation
 
-- **Yes**: unlocks Dragon quests
-- **No**: return and explore other gates
+- Guided progression: House → Wise Man → Gates → Gate Scene → Dragon Quest → Quest Booth.
+- Game saves intermediate state to an Output folder by default (see `config.py`).
 
-### 6) Dragon Quests and Resources
+### Game Feel & UI
 
-If the user says Yes:
+- Top-down scenes, walking animation, collision rects (`main.py`).
+- Dialog screens, multiple choice/slider/rating/text input UI in `game_quizes.py` and `print_questions.py`.
+- Asset fallbacks: if an image/audio is missing, the game uses simpler shapes or fallback content.
 
-- 1-week micro quest (short sessions, tangible output)
-- 1-month mini project (Plan, Build, Review)
-- Resources list (free and accessible)
+---
 
-### 7) Quest Log and Guidance
+## Project Structure (High Level)
 
-Quest reminders like:
+**Root scripts:**
 
-- Go to house
-- Go to wise man
-- Go to gates
+- `main.py` — game loop & scenes (entry point)
+- `game_classes.py`, `game_quizes.py`, `print_questions.py` — UI and quiz handling
 
-Helps users stay oriented and reduces confusion during exploration.
+**Config / state:**
 
-### 8) Game Feel
+- `config.py` — app configuration & environment variable loading
+- `state.py` — typed user profile and game state dataclasses
 
-- Top-down exploration maps
-- Walking animation
-- Collision physics so you cannot walk through objects
-- Scene-to-scene progression feels like a journey
+**Core content & safety:**
 
-### 9) Reliability and Safety Controls
+- `content_engine.py` — prompt templates, schema hints, and content-generation flow
+- `validation.py` — strict validators for every LLM output schema
+- `fallback_content.py` — deterministic fallback content when LLM unavailable
 
-- Strict JSON schemas and validation for LLM outputs
-- Fallback content if LLM fails, so the game still runs
-- Curated dataset for pathways so recommendations stay realistic
+**Integrations:**
+
+- `llm_client.py` — Azure OpenAI wrapper that returns parsed JSON
+
+**Data and assets:**
+
+- `options_catalog.json` — curated dataset of courses, careers, fields, and resources
+- `images/`, `audio/` — UI and audio assets (game uses fallback shapes if missing)
+
+---
 
 ## Tech Stack
 
-- Python 3
-- Pygame
-- Azure OpenAI (LLM generation)
-- JSON schemas + validators
-- Curated pathways dataset (`options_catalog.json`)
+- Python 3.12+ (`pyproject.toml` lists `requires-python = ">=3.12"`)
+- Pygame for UI
+- pygame-widgets (UI helpers)
+- python-dotenv (env loading)
+- Optional LLM: langchain + Azure OpenAI integration (`langchain-openai`, `langchain-core`, etc.)
 
-## Project Flow
+See `pyproject.toml` for dependency groups and versions.
 
-1. Start screen
-2. Profile input (name, education status, optional poly course)
-3. Part 1 generated and played in House
-4. Part 2 generated and played with Wise Man
-5. Analysis shown (strengths, work style, feedback, 3 ranked options)
-6. Gates scene (3 ranked gates)
-7. Gate scene (Yes/No)
-8. Dragon quest scene (if Yes)
-9. Quest booth review
-10. Final completion scene
+---
 
-## How to Run
+## Environment Variables (Azure OpenAI)
 
-### 1) Install Dependencies
+To enable LLM generation, set these environment variables (or use a `.env` file; `config.py` calls `load_dotenv()`):
 
-```bash
-pip install -r requirements.txt
-```
+| Variable | Description |
+|---|---|
+| `AZURE_OPENAI_ENDPOINT` | Azure endpoint URL |
+| `AZURE_OPENAI_API_KEY` | API key |
+| `AZURE_OPENAI_API_VERSION` | (optional) default set in `AppConfig` |
+| `AZURE_OPENAI_DEPLOYMENT` | Deployment name |
 
-### 2) Set Environment Variables (Azure OpenAI)
+> If these are not configured, the game runs using curated fallback content and remains fully playable — no LLM calls are made.
 
-Set these in your terminal or `.env` file:
+---
 
-```
-AZURE_OPENAI_ENDPOINT
-AZURE_OPENAI_API_KEY
-AZURE_OPENAI_API_VERSION
-AZURE_OPENAI_DEPLOYMENT
-```
+## Installation & Running Locally
 
-### 3) Run the Game
-
-From `src`:
+**1. Create a venv and install dependencies (recommended):**
 
 ```bash
-python -m app.main
+python -m venv .venv
+source .venv/bin/activate        # Windows: .venv\Scripts\activate
+pip install -e .
 ```
 
-### Controls
+**2. Set environment variables (optional, for LLM). Example `.env`:**
+
+```
+AZURE_OPENAI_ENDPOINT=https://your-endpoint.openai.azure.com/
+AZURE_OPENAI_API_KEY=your-api-key
+AZURE_OPENAI_API_VERSION=2024-02-01
+AZURE_OPENAI_DEPLOYMENT=your-deployment-name
+```
+
+**3. Run the game from the project root:**
+
+```bash
+python main.py
+```
+
+> The game logs helpful messages if audio/images are not found and uses fallback shapes. The default save directory is `Output` (configured in `config.py`).
+
+---
+
+## Controls
 
 | Action | Keys |
 |---|---|
@@ -182,48 +177,53 @@ python -m app.main
 | Interact / Advance dialog | Enter |
 | Back / Exit screen | Esc |
 | Gate decision | Y or N |
-| House questions | Type answer then Enter, or click Next |
+| MCQ | Up/Down to change, Enter to confirm, 1–9 quick pick |
+| Slider / Rating | Left/Right to change, Enter to confirm |
+| Text input | Type then Enter |
+| Quit quiz early | Q |
+
+---
 
 ## Assets
 
-Place game assets in:
+Place assets under the `images/` and `audio/` folders. If an asset is missing, the game will print a warning and fall back to simple shapes/audio silence.
 
-```
-src/ui/assets/
-```
+---
 
-Example filenames used by screens:
+## Data & Curated Catalog
 
-```
-background.png
-warrior_up.png
-warrior_down.png
-warrior_left.png
-warrior_right.png
-house.png
-wise_man.png
-gate_background.png
-wise_man_gate.png
-dragon_warrior.png
-```
+`options_catalog.json` contains:
 
-> If an asset is missing, the game will fall back to simple shapes.
+- Field vocabulary
+- Curated poly courses and university courses
+- Common resources and subject lists
 
-## Known Limitations
+The content engine references this curated dataset as the authoritative fallback and to keep suggestions realistic.
 
-- LLM calls introduce latency between scenes, even with loading text.
-- More logic (animations, collision blocks) can affect smoothness on low-end devices.
-- LLM outputs may still vary, so we rely on validation and fallbacks to keep flow stable.
+---
 
-## Future Improvements
+## Reliability & Safety
 
-- Cache LLM results per user session to reduce repeated waiting
-- Add a clearer minimap or waypoint arrow for quests
-- Expand the curated dataset for more pathways
-- Improve the final review booth with export to PDF or shareable plan
+- All LLM outputs are constrained by strict schema hints and validators in `validation.py`.
+- The `ContentEngine` composes explicit hard rules to ensure deterministic structure.
+- `fallback_content.py` provides deterministic content when the LLM is unavailable or fails validation.
+- Tone and language are constrained to avoid personal data or precise real-world statistics; salary or outlook phrasing uses safe ranges or qualitative wording.
+
+---
+
+## Development Notes & Extension Points
+
+- Cache LLM responses per session to reduce latency (future improvement).
+- Expand `options_catalog.json` to include more curated pathways and resources.
+- Add export/share options (PDF export of analysis and quests).
+- Polish animation and collision blocks for smoother low-end performance.
+
+---
 
 ## Credits
 
-Built for **CCDS Tech for Good Hackathon 2026**.
+Built for **CCDS Tech for Good Hackathon 2026**
 
 **Team:** Zin Hmue Paing, Thiha Htoo Zin, Bhone Min Thant
+
+**License:** MIT (see `pyproject.toml`)
